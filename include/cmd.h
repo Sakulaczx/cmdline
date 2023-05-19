@@ -559,6 +559,8 @@ uint32
 ctc_cmd_get_value(int32* ret, char* name, char* str, uint32 min, uint32 max, uint8 type);
 uint32
 ctc_cmd_str2uint(char* str, int32* ret);
+int
+ctc_vti_vec_set(vector v, void* val);
 
 
 #define GET_ARGC_INDEX(str) ctc_cli_get_prefix_item(&argv[0], argc, str, 0)

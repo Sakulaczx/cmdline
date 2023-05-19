@@ -234,7 +234,11 @@ int cmd_auto_complete(const char *prompt, char *buf, int *np, int *colp)
     strcpy(tmp_buf, buf);
 
     vline = ctc_cmd_make_strvec(tmp_buf);
-    
+    if (sal_isspace((int)tmp_buf[cnt - 1]))
+    {
+        ctc_vti_vec_set(vline, '\0');
+    }
+
     // if (last_char == ' ') {
     //     describe = ctc_cmd_describe_command(vline, &ret);
     //     for (i = 0; i < vector_max(describe); i++)
@@ -253,7 +257,7 @@ int cmd_auto_complete(const char *prompt, char *buf, int *np, int *colp)
     if (vline != NULL) 
     {
         matched = ctc_cmd_complete_command(vline, &ret);
-        if (ret != CMD_ERR_NO_MATCH) {
+        if (ret != CMD_ERR_NO_MATCH && ret != CMD_ERR_NOTHING_TODO) {
             for (i = 0; matched[i] != NULL; i++) {
                 cmdv[i] = matched[i];
             }

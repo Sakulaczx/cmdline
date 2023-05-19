@@ -8,7 +8,7 @@ extern ctc_cmd_desc_t** matched_desc_ptr;
 
 CTC_CLI(ctc_cli_common_gateway,
         ctc_cli_common_gateway_cmd,
-        "tftp (add|del) gateway A.B.C.D",
+        "toutes sabc (add|del) gateway",
         "Route",
         "Add",
         "Delete",

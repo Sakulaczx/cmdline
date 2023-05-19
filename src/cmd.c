@@ -2082,7 +2082,7 @@ ctc_cmd_describe_cmd_tree(vector vline, int32* index, vector str_vec, vector mat
 
                                 DEBUG("\r\nLine %d:depth: %d, *index: %d, string: %s, j: %d", __LINE__, depth, *index, string, j);
 
-                                return 2; /* not null, last word match */
+                                return 0; /* not null, last word match */
                             }
                             else /* not null, not last word */
                             {
