@@ -12,6 +12,7 @@ static char tmp_buf[CONFIG_SYS_CBSIZE + 1]; /* copy of console I/O buffer */
 
 extern option_cmd_t cmd_opcc_arg4[3];
 extern option_cmd_t cmd_optb_arg3[4];
+extern struct cmd_tbl testcmd2[5];
 
 int cli_readline_into_buffer(const char *const prompt, char *buffer,
                  int timeout)
@@ -38,7 +39,7 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
             case '\n':
                 *p = '\0';
                 //printf("\r\n");
-                CLEAR_ALL_CMD_FLAG();
+                //CLEAR_ALL_CMD_FLAG();
                 return p - p_buf;
 
             case 0x08:          /* ^H  - backspace  */
@@ -99,10 +100,12 @@ void cli_simple_loop(void)
         len = cli_readline(CONFIG_SYS_PROMPT);
        // printf("%d\r\n", len);
         printf("\n");
-        if (len > 0)
-            strncpy(lastcommand, console_buffer, CONFIG_SYS_CBSIZE + 1);
+        cmd_execute(console_buffer);
 
-        rc = cli_simple_run_command(lastcommand, flag);
+        // if (len > 0)
+        //     strncpy(lastcommand, console_buffer, CONFIG_SYS_CBSIZE + 1);
+
+        // rc = cli_simple_run_command(lastcommand, flag);
     }
 }
 
@@ -140,7 +143,7 @@ int cli_simple_parse_line(char *line, char *argv[])
     return nargs;
 }
 
-static char *delete_char (char *buffer, char *p, int *colp, int *np, int plen)
+char *delete_char (char *buffer, char *p, int *colp, int *np, int plen)
 {
     char *s;
 
@@ -163,7 +166,8 @@ static char *delete_char (char *buffer, char *p, int *colp, int *np, int plen)
             } else 
             {
                 ++(*colp);
-                printf("%s", *s);
+                //printf("%s", *s);
+                putchar(*s);
             }
         }
     } 
@@ -177,17 +181,45 @@ static char *delete_char (char *buffer, char *p, int *colp, int *np, int plen)
     return p;
 }
 
+void cmd_execute(char *buf)
+{
+    vector vline;
+    int ret;
+
+    strcpy(tmp_buf, buf);
+    vline = ctc_cmd_make_strvec(tmp_buf);
+    if (vline == NULL)
+    {
+        return CMD_SUCCESS;
+    }
+
+    ret = ctc_cmd_execute_command(vline, NULL);
+
+    ctc_cmd_free_strvec(vline);
+
+    return;
+}
+
+
 int cmd_auto_complete(const char *prompt, char *buf, int *np, int *colp)
 {
     int n = *np, col = *colp;
     char *argv[CONFIG_SYS_MAXARGS + 1];     /* NULL terminated  */
-    char *cmdv[20];
+    char *cmd_argv[CONFIG_SYS_MAXARGS + 1];     /* NULL terminated  */
+
+    char *cmdv[20] = {0};
+    //char *cmdv;
+
     char *s, *t;
     const char *sep;
-    int i, j, k, len, seplen, argc;
-    int cnt;
+    int i = 0, j, k, len, seplen, argc, cmd_argc;
+    int cnt, ret;
     char last_char;
     const char *ps_prompt = CONFIG_SYS_PROMPT;
+    vector vline;
+    char** matched = NULL;
+    vector describe;
+    ctc_cmd_desc_t* desc;
 
     if (strcmp(prompt, ps_prompt) != 0)
         return 0;   /* not in normal console */
@@ -201,12 +233,44 @@ int cmd_auto_complete(const char *prompt, char *buf, int *np, int *colp)
     /* copy to secondary buffer which will be affected */
     strcpy(tmp_buf, buf);
 
+    vline = ctc_cmd_make_strvec(tmp_buf);
+    
+    // if (last_char == ' ') {
+    //     describe = ctc_cmd_describe_command(vline, &ret);
+    //     for (i = 0; i < vector_max(describe); i++)
+    //     {
+    //         if ((desc = vector_slot(describe, i)) != NULL)
+    //         {
+    //             if (desc->cmd[0] == '\0')
+    //             {
+    //                 continue;
+    //             }
+    //         }
+    //     }
+
+    // } 
+    // else 
+    if (vline != NULL) 
+    {
+        matched = ctc_cmd_complete_command(vline, &ret);
+        if (ret != CMD_ERR_NO_MATCH) {
+            for (i = 0; matched[i] != NULL; i++) {
+                cmdv[i] = matched[i];
+            }
+        }
+
+    }
+
+    ctc_cmd_free_strvec(vline);
+
+    //cmdv = matched[0];
     /* separate into argv */
     argc = make_argv(tmp_buf, sizeof(argv)/sizeof(argv[0]), argv);
+    //cmd_argc = make_argv(testcmd2[0].name, sizeof(cmd_argv)/sizeof(cmd_argv[0]), cmd_argv);
 
     /* do the completion and return the possible completions */
-    i = complete_cmdv(argc, argv, last_char,
-        sizeof(cmdv) / sizeof(cmdv[0]), cmdv);
+     //i = complete_cmdv(argc, argv, last_char,
+    //     sizeof(cmdv) / sizeof(cmdv[0]), cmdv);
 
     /* no match; bell and out */
     if (i == 0) 
@@ -280,7 +344,7 @@ int cmd_auto_complete(const char *prompt, char *buf, int *np, int *colp)
     return 1;
 }
 
-static int make_argv(char *s, int argvsz, char *argv[])
+int make_argv(char *s, int argvsz, char *argv[])
 {
     int argc = 0;
 
@@ -311,7 +375,7 @@ static int make_argv(char *s, int argvsz, char *argv[])
     return argc;
 }
 
-static void print_argv(const char *banner, const char *leader, const char *sep,
+void print_argv(const char *banner, const char *leader, const char *sep,
                int linemax, char *const argv[])
 {
     int ll = leader != NULL ? strlen(leader) : 0;
@@ -348,7 +412,7 @@ static void print_argv(const char *banner, const char *leader, const char *sep,
 
 
 
-static int find_common_prefix(char *const argv[])
+int find_common_prefix(char *const argv[])
 {
     int i, len;
     char *anchor, *s, *t;

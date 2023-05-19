@@ -13,12 +13,12 @@ int cli_readline_into_buffer(const char *const prompt, char *buffer,
 int cli_readline(const char *const prompt);
 void cli_simple_loop(void);
 int cli_simple_parse_line(char *line, char *argv[]);
-static char *delete_char (char *buffer, char *p, int *colp, int *np, int plen);
+char *delete_char (char *buffer, char *p, int *colp, int *np, int plen);
 int cmd_auto_complete(const char *prompt, char *buf, int *np, int *colp);
-static int make_argv(char *s, int argvsz, char *argv[]);
-static void print_argv(const char *banner, const char *leader, const char *sep,
+int make_argv(char *s, int argvsz, char *argv[]);
+void print_argv(const char *banner, const char *leader, const char *sep,
                int linemax, char *const argv[]);
-static int find_common_prefix(char *const argv[]);
+int find_common_prefix(char *const argv[]);
 int cli_simple_run_command(const char *cmd, int flag);
 
 
